@@ -1207,3 +1207,18 @@ body.light-mode input[type="datetime-local"] {
     }
 }
 
+/* ===== CORRECCIONES MODO CLARO - LISTAS Y TEXTOS ===== */
+body.light-mode .list-group-item {
+    color: #1e293b !important;        /* fuerza texto oscuro */
+    background-color: transparent;    /* conserva el fondo transparente */
+}
+
+/* Opcional: ajustar bordes si querés un gris más suave */
+body.light-mode .border-secondary {
+    border-color: #cbd5e1 !important;
+}
+
+/* Hamburguesa en modo claro */
+body.light-mode .navbar-sage .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(30, 58, 138, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
