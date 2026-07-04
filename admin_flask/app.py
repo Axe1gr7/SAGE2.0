@@ -82,46 +82,6 @@ def dashboard():
                            espacios_top=espacios_top,
                            horarios_top=horarios_top)
 
-# ==========================================
-# ESPACIOS
-# ==========================================
-@app.route('/usuarios')
-@admin_required
-def usuarios():
-    rol = request.args.get('rol')
-    q = request.args.get('q')
-
-    if rol == 'admin':
-        usuarios_data = api_request('/administradores', method='GET')
-    else:
-        usuarios_data = api_request('/estudiantes', method='GET')
-
-    if not isinstance(usuarios_data, list):
-        usuarios_data = []
-
-    if q:
-        ql = q.lower()
-        usuarios_data = [u for u in usuarios_data if ql in str(u.get('nombre_completo', '')).lower() or ql in str(u.get('matricula', '')).lower() or ql in str(u.get('correo', '')).lower()]
-
-    return render_template('usuarios.html', usuarios=usuarios_data, rol_actual=rol or 'estudiante')
-
-@app.route('/usuarios/create', methods=['POST'])
-@admin_required
-def usuarios_create():
-    data = {
-        "nombre_completo": request.form.get("nombre_completo"),
-        "matricula": request.form.get("matricula"),
-        "correo": request.form.get("correo"),
-        "contrasena": request.form.get("contrasena"),
-        "carrera": request.form.get("carrera")
-    }
-    resp = api_request('/estudiantes/', method='POST', data=data)
-    if isinstance(resp, dict) and 'error' in resp:
-        flash(f'Error al crear usuario: {resp["error"]}', 'danger')
-    else:
-        flash('Usuario creado correctamente.', 'success')
-    return redirect(url_for('usuarios'))
-
 @app.route('/usuarios/update/<int:id>', methods=['POST'])
 @admin_required
 def usuarios_update(id):
