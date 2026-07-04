@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}Talleres{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-4 fade-in">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="dashboard-title">Gestión de Talleres</h1>
+        <div>
+            <button class="btn btn-outline-primary sage-btn me-2" data-bs-toggle="modal" data-bs-target="#modalCocurricular">
+                <i class="bi bi-calendar-range me-2"></i>Nuevo Cocurricular
+            </button>
+            <button class="btn btn-primary sage-btn" data-bs-toggle="modal" data-bs-target="#modalTallerEspecial">
+                <i class="bi bi-lightning-charge-fill me-2"></i>Nuevo Taller Especial
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabs de navegación -->
+    <ul class="nav nav-pills mb-4" id="tallerTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-cocurricular" data-bs-toggle="pill" data-bs-target="#pane-cocurricular" type="button" role="tab">
+                <i class="bi bi-calendar-week me-2"></i>Cocurriculares <span class="badge bg-primary ms-1">{{ cocurriculares|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-especial" data-bs-toggle="pill" data-bs-target="#pane-especial" type="button" role="tab">
+                <i class="bi bi-lightning-charge me-2"></i>Talleres Especiales <span class="badge bg-warning text-dark ms-1">{{ talleres_especiales|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Contenido de Tabs -->
+    <div class="tab-content" id="tallerTabsContent">
+
+        <!-- Tab: Cocurriculares -->
+        <div class="tab-pane fade show active" id="pane-cocurricular" role="tabpanel">
+            <div class="card neon-box">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+                    <h5 class="fw-bold"><i class="bi bi-book-half me-2 text-primary"></i>Actividades Cocurriculares (Recurrentes)</h5>
+                    <p class="text-muted small mb-0">Clases fijas que se repiten semanalmente durante 16 semanas (1 semestre).</p>
+                </div>
+                <div class="card-body">
+                    {% if cocurriculares and cocurriculares|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Docente</th>
+                                    <th>Grupo</th>
+                                    <th>Horario</th>
+                                    <th>Estatus</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for coc in cocurriculares %}
+                                <tr>
+                                    <td><strong>#{{ coc.id_clase }}</strong></td>
+                                    <td>{{ coc.nombre }}</td>
+                                    <td>{{ coc.docente }}</td>
+                                    <td><code>{{ coc.grupo }}</code></td>
+                                    <td><span class="badge bg-info text-dark">{{ coc.horario or 'Sin definir' }}</span></td>
+                                    <td>
+                                        {% if coc.estatus == 0 %}
+                                        <span class="badge bg-success rounded-pill px-3">Activo</span>
+                                        {% else %}
+                                        <span class="badge bg-danger rounded-pill px-3">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-book display-4 opacity-50 mb-3 d-block"></i>
+                        <p>No hay actividades cocurriculares registradas.</p>
+                        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCocurricular">
+                            <i class="bi bi-plus-circle me-1"></i>Crear primera actividad
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Talleres Especiales -->
+        <div class="tab-pane fade" id="pane-especial" role="tabpanel">
+            <div class="card neon-box">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+                    <h5 class="fw-bold"><i class="bi bi-lightning-charge-fill me-2 text-warning"></i>Talleres Especiales (Únicos)</h5>
+                    <p class="text-muted small mb-0">Talleres que se imparten en una fecha y horario específicos (no recurrentes).</p>
+                </div>
+                <div class="card-body">
+                    {% if talleres_especiales and talleres_especiales|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th>Fecha Inicio</th>
+                                    <th>Fecha Fin</th>
+                                    <th>Estatus</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for taller in talleres_especiales %}
+                                <tr>
+                                    <td><strong>#{{ taller.id_evento }}</strong></td>
+                                    <td>{{ taller.nombre }}</td>
+                                    <td><span class="text-muted small">{{ taller.descripcion or '—' }}</span></td>
+                                    <td>{{ taller.fecha_inicio or '—' }}</td>
+                                    <td>{{ taller.fecha_fin or '—' }}</td>
+                                    <td>
+                                        {% if taller.estatus == 0 %}
+                                        <span class="badge bg-success rounded-pill px-3">Activo</span>
+                                        {% else %}
+                                        <span class="badge bg-danger rounded-pill px-3">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-lightning display-4 opacity-50 mb-3 d-block"></i>
+                        <p>No hay talleres especiales programados.</p>
+                        <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalTallerEspecial">
+                            <i class="bi bi-plus-circle me-1"></i>Programar primer taller
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nuevo Cocurricular -->
+<div class="modal fade" id="modalCocurricular" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content sage-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-calendar-range me-2"></i>Registrar Actividad Cocurricular
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info small mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Se creará una <strong>clase recurrente</strong> con <strong>16 reservas semanales automáticas</strong> (1 semestre).
+                </div>
+                <form action="{{ url_for('crear_cocurricular') }}" method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">NOMBRE DEL COCURRICULAR</label>
+                            <input type="text" class="form-control" name="nombre" placeholder="Ej: Robótica Básica" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">DOCENTE / INSTRUCTOR</label>
+                            <input type="text" class="form-control" name="docente" placeholder="Nombre del instructor" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">GRUPO</label>
+                            <input type="text" class="form-control" name="grupo" value="COCURR" placeholder="Ej: COCURR-A">
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label text-muted small fw-bold">ESPACIO</label>
+                            <select class="form-select" name="id_espacio" required>
+                                <option value="" disabled selected>Seleccionar espacio...</option>
+                                {% for esp in espacios %}
+                                <option value="{{ esp.id_espacio }}">{{ esp.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">DÍA DE LA SEMANA</label>
+                            <select class="form-select" name="dia_semana" required>
+                                <option value="0">Lunes</option>
+                                <option value="1">Martes</option>
+                                <option value="2">Miércoles</option>
+                                <option value="3">Jueves</option>
+                                <option value="4">Viernes</option>
+                                <option value="5">Sábado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA INICIO</label>
+                            <input type="time" class="form-control" name="hora_inicio" value="14:00" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA FIN</label>
+                            <input type="time" class="form-control" name="hora_fin" value="16:00" required>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-2">
+                            <i class="bi bi-calendar-check me-2"></i>Crear Cocurricular (16 semanas)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nuevo Taller Especial -->
+<div class="modal fade" id="modalTallerEspecial" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content sage-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>Programar Taller Especial
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning small mb-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Se creará un <strong>evento único</strong> con su reserva de espacio para la fecha indicada.
+                </div>
+                <form action="{{ url_for('crear_taller_especial') }}" method="POST">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label text-muted small fw-bold">NOMBRE DEL TALLER</label>
+                            <input type="text" class="form-control" name="nombre" placeholder="Ej: Workshop de IA Generativa" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">FECHA</label>
+                            <input type="date" class="form-control" name="fecha" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">DESCRIPCIÓN</label>
+                        <textarea class="form-control" name="descripcion" rows="2" placeholder="Breve descripción del taller..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">ESPACIO</label>
+                            <select class="form-select" name="id_espacio" required>
+                                <option value="" disabled selected>Seleccionar...</option>
+                                {% for esp in espacios %}
+                                <option value="{{ esp.id_espacio }}">{{ esp.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA INICIO</label>
+                            <input type="time" class="form-control" name="hora_inicio" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA FIN</label>
+                            <input type="time" class="form-control" name="hora_fin" required>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning py-2 text-dark fw-bold">
+                            <i class="bi bi-lightning-charge me-2"></i>Programar Taller Especial
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

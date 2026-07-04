@@ -1,0 +1,19 @@
+{% macro render_filter_bar(entity_label, form_action, filters) %}
+<form class="neon-filter-bar" method="GET" action="{{ form_action }}">
+  <div class="row g-2 align-items-end">
+    {% for f in filters %}
+      <div class="col-12 col-md-3">
+        <label class="form-label text-muted small fw-bold">{{ f.label }}</label>
+        {{ f.control|safe }}
+      </div>
+    {% endfor %}
+    <div class="col-12 col-md-2 d-grid">
+      <button class="btn btn-primary py-2" type="submit"><i class="bi bi-funnel me-2"></i>Filtrar</button>
+    </div>
+    <div class="col-12 col-md-2 d-grid">
+      <a class="btn btn-outline-secondary py-2" href="{{ form_action }}"><i class="bi bi-arrow-counterclockwise me-2"></i>Limpiar</a>
+    </div>
+  </div>
+</form>
+{% endmacro %}
+

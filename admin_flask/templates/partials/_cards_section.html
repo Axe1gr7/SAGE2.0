@@ -1,0 +1,15 @@
+{% macro cards_section(title, subtitle=None) %}
+<section class="mt-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <h1 class="dashboard-title mb-1" style="text-align:left">{{ title }}</h1>
+      {% if subtitle %}
+        <div class="text-muted small">{{ subtitle }}</div>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2">{% block cards_actions %}{% endblock %}</div>
+  </div>
+  {% block cards_body %}{% endblock %}
+</section>
+{% endmacro %}
+

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario de Equipos{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="dashboard-title" style="text-align:left">Dispositivos & Equipos</h1>
+            <div class="text-muted small">Filtra por espacio y estado operativo.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-2"></i>Imprimir</button>
+            <button class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Registrar Equipo</button>
+        </div>
+    </div>
+
+    <div class="card neon-box mb-4">
+        <div class="card-body">
+            <form class="neon-filter-bar" method="GET" action="{{ url_for('equipos') }}">
+
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label text-muted small fw-bold">Espacio (ID)</label>
+                        <input class="neon-input" type="number" name="espacio_id" value="{{ request.args.get('espacio_id','') }}" placeholder="Ej: 1" />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label text-muted small fw-bold">Estado</label>
+                        <select class="form-select neon-input" name="estado">
+                            <option value="" {% if not request.args.get('estado') %}selected{% endif %}>Todos</option>
+                            <option value="operativo" {% if request.args.get('estado')=='operativo' %}selected{% endif %}>Operativo</option>
+                            <option value="mantenimiento" {% if request.args.get('estado')=='mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+                            <option value="inactivo" {% if request.args.get('estado')=='inactivo' %}selected{% endif %}>Inactivo</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 d-grid">
+                        <button class="btn btn-primary py-2" type="submit"><i class="bi bi-funnel me-2"></i>Filtrar</button>
+                    </div>
+                    <div class="col-12 col-md-2 d-grid">
+                        <a class="btn btn-outline-secondary py-2" href="{{ url_for('equipos') }}"><i class="bi bi-x-circle me-2"></i>Limpiar</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="row g-3">
+        {% for equipo in equipos %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card neon-box h-100 p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1"><i class="bi bi-pc-display me-2 text-primary"></i><strong>{{ equipo.nombre }}</strong></h5>
+                        <div class="text-muted small">ID: {{ equipo.id_equipo or equipo.id }}</div>
+                    </div>
+                    <span class="badge bg-secondary">Espacio {{ equipo.id_espacio }}</span>
+                </div>
+
+                <div class="mt-3">
+                    {% set estado_show = equipo.estado_operativo or equipo.estado or '—' %}
+                    {% if estado_show|string|lower == 'operativo' %}
+                      <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Operativo</span>
+                    {% elif estado_show|string|lower == 'mantenimiento' %}
+                      <span class="badge bg-warning text-dark"><i class="bi bi-tools me-1"></i> Mantenimiento</span>
+                    {% else %}
+                      <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i> {{ estado_show }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3 d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary flex-grow-1"><i class="bi bi-pencil me-2"></i>Editar</button>
+                    <button class="btn btn-sm btn-outline-danger flex-grow-1"><i class="bi bi-trash me-2"></i>Eliminar</button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-pc-display display-4 opacity-50 mb-3 d-block"></i>
+                No hay equipos con esos filtros.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Tabla imprimible -->
+    <div class="card neon-box mt-4 printable-only">
+        <div class="card-body">
+            <h5 class="mb-3">Tabla imprimible</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Espacio (ID)</th>
+                            <th>Nombre</th>
+                            <th>Estado operativo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipo in equipos %}
+                        <tr>
+                            <td>{{ equipo.id_equipo or equipo.id }}</td>
+                            <td>{{ equipo.id_espacio }}</td>
+                            <td><strong>{{ equipo.nombre }}</strong></td>
+                            <td>{{ equipo.estado_operativo or equipo.estado or '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_filters.js') }}"></script>
+{% endblock %}
+

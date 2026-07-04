@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa de Sitios - Disponibles{% endblock %}
+
+{% block content %}
+<div class="map-container">
+    <h1 class="dashboard-title">MAPA DE ESPACIOS - DISPONIBLES</h1>
+
+    <div class="filters-row">
+        <select id="select-espacio" class="neon-input filter-select">
+            {% for esp in espacios %}
+                <option value="{{ esp.id_espacio }}" data-apertura="{{ esp.horario_apertura }}" data-cierre="{{ esp.horario_cierre }}">
+                    {{ esp.nombre }} ({{ esp.horario_apertura }} - {{ esp.horario_cierre }})
+                </option>
+            {% endfor %}
+        </select>
+        <input type="date" id="fecha-select" class="neon-input filter-date" value="{{ fecha_hoy }}">
+    </div>
+
+    <div class="map-content">
+        <div class="neon-box map-grid">
+            <div class="pizarron">PIZARRÓN / FRENTE</div>
+            <div id="lab-grid" class="lab-grid">
+                <div class="loading">Cargando equipos...</div>
+            </div>
+        </div>
+
+        <div class="neon-box legend">
+            <h3>Estado</h3>
+            <div class="legend-item"><span class="legend-color available-color"></span> Disponible</div>
+            <div class="legend-item"><span class="legend-color occupied-color"></span> Ocupado</div>
+            <div class="legend-item"><span class="legend-color selected-color"></span> Seleccionado</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de reserva (Bootstrap) -->
+<div class="modal fade" id="modalReserva" tabindex="-1" aria-labelledby="modalReservaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content sage-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalReservaLabel">Confirmar Reserva</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>Equipo seleccionado: <strong id="equipoSelec" class="reserva-equipo"></strong></p>
+                <p id="info-horario" class="reserva-horario"></p>
+
+                <form id="formReserva">
+                    <!-- El admin se autentica con cookie/session; FastAPI requiere Authorization Bearer en llamadas fetch -->
+                    <input type="hidden" name="id_espacio" id="id_espacio_input">
+                    <input type="hidden" name="id_equipo" id="id_equipo_input">
+
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Reserva:</label>
+                        <select name="tipo_reserva" id="tipo_reserva" class="sage-input" required>
+                            <option value="">Selecciona...</option>
+                            <option value="estudiante">Individual (Estudiante)</option>
+                            <option value="clase">Clase Programada</option>
+                            <option value="evento">Evento Especial</option>
+                        </select>
+                    </div>
+
+                    <div id="contenedor-referencia" class="mb-3" style="display: none;">
+                        <label id="label-referencia" class="form-label"></label>
+                        <select name="id_referencia" id="select-referencia" class="sage-input" required></select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label">Fecha/Hora Inicio:</label>
+                            <input type="datetime-local" name="fecha_hora_inicio" id="fecha_hora_inicio" class="sage-input" required>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Fecha/Hora Fin:</label>
+                            <input type="datetime-local" name="fecha_hora_fin" id="fecha_hora_fin" class="sage-input" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" id="modulosContainer" style="display:none;">
+                        <div class="col-12">
+                            <label class="form-label">Módulo / Horario:</label>
+                            <select id="select-horario" class="sage-input"></select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Agendar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const espaciosData = {{ espacios|tojson }};
+    const equiposData = {{ equipos|tojson }};
+    const clasesData = {{ clases|tojson }};
+    const estudiantesData = {{ estudiantes|tojson }};
+    const eventosData = {{ eventos|tojson }};
+
+    const fechaHoy = '{{ fecha_hoy }}';
+    let ocupacionReal = {};
+    let modalReserva;
+    let ultimoAsiento = null;
+
+    const adminToken = {{ (session.get('admin_access_token') or 'null')|tojson }};
+
+    function setLoading(msg){
+        const grid = document.getElementById('lab-grid');
+        if(grid) grid.innerHTML = `<div class="loading">${msg}</div>`;
+    }
+
+    function formatLocalDateTimeInput(dateStr){
+        // dateStr: YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss
+        // Para datetime-local necesitamos YYYY-MM-DDTHH:mm
+        if(!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const pad = (n) => String(n).padStart(2,'0');
+        const yyyy = d.getFullYear();
+        const mm = pad(d.getMonth()+1);
+        const dd = pad(d.getDate());
+        const hh = pad(d.getHours());
+        const mi = pad(d.getMinutes());
+        return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        modalReserva = new bootstrap.Modal(document.getElementById('modalReserva'));
+        const fechaSelect = document.getElementById('fecha-select');
+        if (fechaSelect) fechaSelect.value = fechaHoy;
+        if (fechaSelect) fechaSelect.addEventListener('change', actualizarTodo);
+
+        const selectEspacio = document.getElementById('select-espacio');
+        if (selectEspacio) selectEspacio.addEventListener('change', actualizarTodo);
+
+        const tipoReserva = document.getElementById('tipo_reserva');
+        if (tipoReserva) tipoReserva.addEventListener('change', cambiarTipoReserva);
+
+        actualizarTodo();
+    });
+
+    async function cargarOcupacion(fecha) {
+        try {
+            // Endpoint FastAPI existente en tu API: /reservas/ocupacion?fecha=YYYY-MM-DD
+            const response = await fetch(`/reservas/ocupacion?fecha=${fecha}`, {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            if (!response.ok) throw new Error('HTTP error ' + response.status);
+            const data = await response.json();
+            ocupacionReal = data.ocupacion || {};
+        } catch (error) {
+            console.error('Error al cargar ocupación:', error);
+            ocupacionReal = {};
+        }
+    }
+
+    function dibujarEquipos(espacioId) {
+        const equiposEspacio = equiposData.filter(eq => eq.id_espacio === espacioId);
+        const grid = document.getElementById('lab-grid');
+        if (!grid) return;
+
+        if (!equiposEspacio.length) {
+            grid.innerHTML = '<p style="color: white; text-align: center;">No hay equipos registrados en este espacio.</p>';
+            return;
+        }
+
+        let html = '';
+        equiposEspacio.forEach(eq => {
+            const estaOcupado = ocupacionReal[eq.id_equipo] && ocupacionReal[eq.id_equipo].length > 0;
+            const claseEstado = estaOcupado ? 'occupied' : 'available';
+            html += `<div class="pc-node ${claseEstado}" data-equipo-id="${eq.id_equipo}" data-equipo-nombre="${eq.nombre_equipo}" onclick="seleccionarEquipo(this, ${eq.id_equipo}, '${eq.nombre_equipo}')">${eq.nombre_equipo}</div>`;
+        });
+
+        grid.innerHTML = html;
+    }
+
+    function seleccionarEquipo(elemento, idEquipo, nombreEquipo) {
+        if (elemento.classList.contains('occupied')) {
+            alert('Este equipo ya tiene reservas para la fecha seleccionada.');
+            return;
+        }
+        if (ultimoAsiento) ultimoAsiento.classList.remove('selected');
+        elemento.classList.add('selected');
+        ultimoAsiento = elemento;
+
+        document.getElementById('equipoSelec').innerText = nombreEquipo;
+        document.getElementById('id_espacio_input').value = parseInt(document.getElementById('select-espacio').value);
+        document.getElementById('id_equipo_input').value = idEquipo;
+
+        // Cargar modulos disponibles en un segundo paso (opcional, para reflejar el flujo móvil Laravel)
+        document.getElementById('modulosContainer').style.display = 'block';
+    }
+
+    async function cargarOpcionesReferencia(tipo){
+        const contenedor = document.getElementById('contenedor-referencia');
+        const label = document.getElementById('label-referencia');
+        const select = document.getElementById('select-referencia');
+
+        if(!contenedor || !label || !select) return;
+
+        if(!tipo){
+            contenedor.style.display='none';
+            return;
+        }
+
+        contenedor.style.display='block';
+        label.textContent = tipo === 'estudiante' ? 'Selecciona al estudiante:' : (tipo === 'clase' ? 'Selecciona la clase:' : 'Selecciona el evento:');
+
+        select.innerHTML = '<option value="">Selecciona...</option>';
+
+        let arr = [];
+        if(tipo === 'estudiante') arr = estudiantesData;
+        if(tipo === 'clase') arr = clasesData;
+        if(tipo === 'evento') arr = eventosData;
+
+        arr.forEach(item => {
+            let idKey = tipo === 'estudiante' ? 'id_estudiante' : (tipo === 'clase' ? 'id_clase' : 'id_evento');
+            const idVal = item[idKey];
+            let texto = '';
+            if(tipo === 'estudiante') texto = `${item.matricula} - ${item.nombre_completo}`;
+            else if(tipo === 'clase') texto = `${item.nombre} (${item.materia})`;
+            else texto = item.nombre;
+            select.innerHTML += `<option value="${idVal}">${texto}</option>`;
+        });
+    }
+
+    function cambiarTipoReserva(){
+        const tipo = document.getElementById('tipo_reserva').value;
+        cargarOpcionesReferencia(tipo);
+    }
+
+    async function actualizarTodo() {
+        const fecha = document.getElementById('fecha-select').value;
+        const espacioId = parseInt(document.getElementById('select-espacio').value);
+        if (!fecha || isNaN(espacioId)) return;
+
+        setLoading('Cargando ocupación...');
+        await cargarOcupacion(fecha);
+        setLoading('Dibujando equipos...');
+        dibujarEquipos(espacioId);
+
+        const select = document.getElementById('select-espacio');
+        const apertura = select.options[select.selectedIndex].dataset.apertura;
+        const cierre = select.options[select.selectedIndex].dataset.cierre;
+
+        const info = document.getElementById('info-horario');
+        if (info) info.innerText = `Horarios del sitio: ${apertura} a ${cierre} hrs. (Fecha: ${fecha})`;
+    }
+
+    document.getElementById('formReserva').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const tipo = document.getElementById('tipo_reserva').value;
+        const idReferencia = document.getElementById('select-referencia').value;
+        const espacioId = document.getElementById('id_espacio_input').value;
+        const equipoId = document.getElementById('id_equipo_input').value;
+        const fechaInicio = document.getElementById('fecha_hora_inicio').value;
+        const fechaFin = document.getElementById('fecha_hora_fin').value;
+
+        if(!tipo || !idReferencia){
+            alert('Debes seleccionar el tipo de reserva y el beneficiario.');
+            return;
+        }
+
+
+        const payload = {
+            id_espacio: Number(espacioId),
+            id_equipo: equipoId ? Number(equipoId) : null,
+            tipo_reserva: tipo,
+            // FastAPI espera string tipo ISO: YYYY-MM-DDTHH:MM:SS
+            fecha_hora_inicio: fechaInicio + ':00',
+            fecha_hora_fin: fechaFin + ':00',
+            observaciones: 'Reserva desde Admin (Sitios)'
+        };
+
+        if(tipo === 'estudiante') payload['id_estudiante_beneficiario'] = Number(idReferencia);
+        if(tipo === 'clase') payload['id_clase_beneficiario'] = Number(idReferencia);
+        if(tipo === 'evento') payload['id_evento_beneficiario'] = Number(idReferencia);
+
+        const resp = await fetch('/reservas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${adminToken}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await resp.json();
+        if(!resp.ok){
+            alert('Error: ' + (result.detail || result.message || 'No se pudo crear la reserva'));
+            return;
+        }
+
+        alert('Reserva creada exitosamente');
+        modalReserva.hide();
+        actualizarTodo();
+    });
+</script>
+{% endblock %}
+

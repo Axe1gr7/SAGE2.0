@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión General{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <h1 class="dashboard-title mb-4">GESTIÓN GENERAL</h1>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div class="capsule-menu" id="menu-tabs">
+            <button onclick="changeTab('administradores')" class="capsule-btn active" id="btn-administradores">Administradores</button>
+            <button onclick="changeTab('estudiantes')" class="capsule-btn" id="btn-estudiantes">Estudiantes</button>
+            <button onclick="changeTab('clases')" class="capsule-btn" id="btn-clases">Clases</button>
+            <button onclick="changeTab('eventos')" class="capsule-btn" id="btn-eventos">Eventos</button>
+        </div>
+
+        <button class="btn btn-action-yellow" onclick="abrirModalAgregar()">+ AGREGAR REGISTRO</button>
+    </div>
+
+    <div class="neon-box p-0 overflow-auto">
+        <table class="neon-table w-100">
+            <thead id="tabla-head"></thead>
+            <tbody id="tabla-body">
+                <tr><td colspan="10" class="text-center">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal para crear/editar -->
+<div class="modal fade" id="modalFormulario" tabindex="-1" aria-labelledby="modalFormularioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content sage-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalFormularioLabel">NUEVO REGISTRO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formGeneral">
+                    <input type="hidden" name="_method" id="form_method" value="POST">
+                    <input type="hidden" name="id" id="registro_id">
+                    <div id="form-fields"></div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                        <button type="submit" class="btn btn-action-green" id="btn-guardar">GUARDAR DATOS</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación eliminar -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content sage-modal" style="border-color: #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.4);">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color: #f87171;">⚠ ELIMINAR REGISTRO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>¿Estás seguro de que deseas eliminar este registro?</p>
+                <form id="formEliminar">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="hidden" name="id_eliminar" id="id_eliminar">
+                    <div class="d-flex justify-content-center gap-3 mt-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                        <button type="submit" class="btn btn-action-red">SÍ, ELIMINAR</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentTab = 'administradores';
+    let modalForm, modalDel;
+
+    const adminToken = {{ (session.get('admin_access_token') or 'null')|tojson }};
+
+    const formTemplates = {
+        'administradores': `
+            <div class="mb-3"><label class="form-label">Nombre Completo</label><input type="text" name="nombre_completo" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Puesto</label><input type="text" name="puesto" class="neon-input"></div>
+            <div class="mb-3"><label class="form-label">Correo</label><input type="email" name="correo" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Contraseña</label><input type="password" name="contrasena" class="neon-input" required></div>
+        `,
+        'estudiantes': `
+            <div class="mb-3"><label class="form-label">Nombre Completo</label><input type="text" name="nombre_completo" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Matrícula</label><input type="text" name="matricula" class="neon-input" required></div>
+            <div class="mb-3">
+                <label class="form-label">Carrera</label>
+                <select name="carrera" class="neon-input" required>
+                    <option value="sistemas">Sistemas</option>
+                    <option value="mecatronica">Mecatrónica</option>
+                    <option value="ingenieria de datos">Ingeniería de Datos</option>
+                    <option value="automotriz">Automotriz</option>
+                    <option value="negocios internacionales">Negocios Internacionales</option>
+                    <option value="administracion">Administración</option>
+                    <option value="manufactura">Manufactura</option>
+                </select>
+            </div>
+            <div class="mb-3"><label class="form-label">Correo</label><input type="email" name="correo" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Contraseña</label><input type="password" name="contrasena" class="neon-input" required></div>
+        `,
+        'clases': `
+            <div class="mb-3"><label class="form-label">Nombre</label><input type="text" name="nombre" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Materia</label><input type="text" name="materia" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Grupo</label><input type="text" name="grupo" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Docente</label><input type="text" name="docente" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Correo Docente</label><input type="email" name="correo_docente" class="neon-input"></div>
+        `,
+        'eventos': `
+            <div class="mb-3"><label class="form-label">Nombre</label><input type="text" name="nombre" class="neon-input" required></div>
+            <div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="neon-input" rows="2"></textarea></div>
+        `
+    };
+
+    const tableConfigs = {
+        'administradores': { headers: ['Nombre Completo','Puesto','Correo','Acciones'], keys: ['nombre_completo','puesto','correo'], idKey: 'id_administrador', base: '/administradores' },
+        'estudiantes': { headers: ['Matrícula','Nombre Completo','Carrera','Correo','Acciones'], keys: ['matricula','nombre_completo','carrera','correo'], idKey: 'id_estudiante', base: '/estudiantes' },
+        'clases': { headers: ['Nombre','Materia','Grupo','Docente','Acciones'], keys: ['nombre','materia','grupo','docente'], idKey: 'id_clase', base: '/clases' },
+        'eventos': { headers: ['Nombre','Descripción','Inicio','Fin','Acciones'], keys: ['nombre','descripcion','fecha_inicio','fecha_fin'], idKey: 'id_evento', base: '/eventos' }
+    };
+
+    function getBaseUrl(){
+        return tableConfigs[currentTab].base;
+    }
+
+    async function cargarDatos(){
+        const tbody = document.getElementById('tabla-body');
+        const config = tableConfigs[currentTab];
+        document.getElementById('tabla-head').innerHTML = '<tr>' + config.headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center">Cargando...</td></tr>';
+
+        const response = await fetch(getBaseUrl(), {
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        const data = await response.json();
+
+        const items = Array.isArray(data) ? data : (data.data || []);
+
+        if(!items.length){
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center">No hay registros</td></tr>';
+            return;
+        }
+
+        let html = '';
+        items.forEach(item => {
+            const id = item[config.idKey];
+            html += '<tr>';
+            config.keys.forEach(k => {
+                let v = item[k] ?? '';
+                html += `<td>${v}</td>`;
+            });
+            html += `
+                <td class="acciones-cell">
+                    <button class="btn btn-action-yellow" onclick="abrirModalEditar(${id})">Editar</button>
+                    <button class="btn btn-action-red" onclick="abrirModalEliminar(${id})">Eliminar</button>
+                </td>
+            `;
+            html += '</tr>';
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    function changeTab(tab){
+        currentTab = tab;
+        ['administradores','estudiantes','clases','eventos'].forEach(id => {
+            const btn = document.getElementById('btn-' + id);
+            if(btn){
+                if(id === tab) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        });
+        cargarDatos();
+    }
+
+    function abrirModalAgregar(){
+        document.getElementById('modalFormularioLabel').innerText = 'NUEVO REGISTRO';
+        document.getElementById('form_method').value = 'POST';
+        document.getElementById('registro_id').value = '';
+        document.getElementById('btn-guardar').innerText = 'GUARDAR DATOS';
+        document.getElementById('form-fields').innerHTML = formTemplates[currentTab];
+        modalForm.show();
+    }
+
+    async function abrirModalEditar(id){
+        const config = tableConfigs[currentTab];
+        const url = `${config.base}/${id}`;
+        const response = await fetch(url, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const data = await response.json();
+
+        document.getElementById('modalFormularioLabel').innerText = 'EDITAR REGISTRO';
+        document.getElementById('form_method').value = 'PUT';
+        document.getElementById('registro_id').value = id;
+        document.getElementById('btn-guardar').innerText = 'ACTUALIZAR DATOS';
+        document.getElementById('form-fields').innerHTML = formTemplates[currentTab];
+
+        setTimeout(() => {
+            const form = document.getElementById('formGeneral');
+            for(const key in data){
+                const input = form.querySelector(`[name="${key}"]`);
+                if(input) input.value = data[key] ?? '';
+            }
+        }, 20);
+
+        modalForm.show();
+    }
+
+    function abrirModalEliminar(id){
+        document.getElementById('id_eliminar').value = id;
+        modalDel.show();
+    }
+
+    document.getElementById('formGeneral').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const method = document.getElementById('form_method').value;
+        const id = document.getElementById('registro_id').value;
+        const config = tableConfigs[currentTab];
+        const url = id ? `${config.base}/${id}` : config.base;
+
+        const formData = new FormData(e.target);
+        const payload = {};
+        formData.forEach((value, key) => {
+            if(key !== '_method' && key !== '_token') payload[key] = value;
+        });
+
+        const response = await fetch(url, {
+            method: method === 'POST' ? 'POST' : 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${adminToken}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if(result?.error){
+            alert('Error: ' + (result.message || 'No se pudo guardar'));
+            return;
+        }
+
+        modalForm.hide();
+        cargarDatos();
+        alert('Operación completada con éxito');
+    });
+
+    document.getElementById('formEliminar').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('id_eliminar').value;
+        const config = tableConfigs[currentTab];
+        const url = `${config.base}/${id}`;
+
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+
+        await response.json().catch(()=>null);
+        modalDel.hide();
+        cargarDatos();
+        alert('Registro eliminado correctamente');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        modalForm = new bootstrap.Modal(document.getElementById('modalFormulario'));
+        modalDel = new bootstrap.Modal(document.getElementById('modalEliminar'));
+        changeTab('administradores');
+    });
+</script>
+{% endblock %}
+

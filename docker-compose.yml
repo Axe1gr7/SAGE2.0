@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: sage_postgres
+    environment:
+      POSTGRES_USER: SAGE
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: DB_SAGE
+    ports:
+      - "5433:5432"
+    networks:
+      - sage_network
+    restart: unless-stopped
+    volumes:
+      - sage_pgdata:/var/lib/postgresql/data
+
+  api_fastapi:
+    build:
+      context: ./api_fastapi
+      dockerfile: dockerfile
+    container_name: sage_api_fastapi
+    ports:
+      # CAMBIADO a 8080 para evitar conflictos con otras apps
+      - "8080:8000"
+    environment:
+      - DATABASE_URL=postgresql://SAGE:1234@db:5432/DB_SAGE
+    depends_on:
+      - db
+    networks:
+      - sage_network
+    restart: unless-stopped
+
+  admin_flask:
+    build:
+      context: ./admin_flask
+      dockerfile: Dockerfile
+    container_name: sage_admin_flask
+    ports:
+      - "5050:5050"
+    environment:
+      - API_URL=http://api_fastapi:8000
+    depends_on:
+      - api_fastapi
+    networks:
+      - sage_network
+    restart: unless-stopped
+
+
+
+networks:
+  sage_network:
+    driver: bridge
+
+volumes:
+  sage_pgdata:

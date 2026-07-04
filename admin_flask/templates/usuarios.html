@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-4 fade-in">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="dashboard-title">Gestión de Usuarios</h1>
+        <div>
+            <button class="btn btn-outline-primary sage-btn me-2" data-bs-toggle="modal" data-bs-target="#modalNuevoEstudiante">
+                <i class="bi bi-mortarboard-fill me-2"></i>Nuevo Estudiante
+            </button>
+            <button class="btn btn-primary sage-btn" data-bs-toggle="modal" data-bs-target="#modalNuevoAdmin">
+                <i class="bi bi-person-plus-fill me-2"></i>Nuevo Administrador
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna de Estudiantes -->
+        <div class="col-lg-8 mb-4">
+            <div class="card neon-box">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+                    <h5 class="fw-bold"><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Estudiantes ({{ estudiantes|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if estudiantes and estudiantes|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Matrícula</th>
+                                    <th>Nombre</th>
+                                    <th>Correo</th>
+                                    <th>Carrera</th>
+                                    <th>Estatus</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for est in estudiantes %}
+                                <tr>
+                                    <td><strong>{{ est.id_estudiante }}</strong></td>
+                                    <td><code>{{ est.matricula }}</code></td>
+                                    <td>{{ est.nombre_completo }}</td>
+                                    <td><span class="text-muted small">{{ est.correo }}</span></td>
+                                    <td><span class="badge bg-info text-dark">{{ est.carrera }}</span></td>
+                                    <td>
+                                        {% if est.estatus == 0 %}
+                                            <span class="badge bg-success rounded-pill px-3">Activo</span>
+                                        {% else %}
+                                            <span class="badge bg-danger rounded-pill px-3">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form action="{{ url_for('eliminar_estudiante', id=est.id_estudiante) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar a {{ est.nombre_completo }}?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-people display-4 opacity-50 mb-3 d-block"></i>
+                        <p>No hay estudiantes registrados.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna de Administradores -->
+        <div class="col-lg-4 mb-4">
+            <div class="card neon-box">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+                    <h5 class="fw-bold"><i class="bi bi-shield-lock-fill me-2 text-danger"></i>Administradores ({{ administradores|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if administradores and administradores|length > 0 %}
+                    <div class="list-group list-group-flush">
+                        {% for adm in administradores %}
+                        <div class="list-group-item bg-transparent px-0 d-flex align-items-center">
+                            <div class="me-3" style="width: 40px; height: 40px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; background: rgba(100,100,255,0.1); border-radius: 50%;">
+                                <span>🛡️</span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ adm.nombre_completo }}</h6>
+                                <small class="text-muted">{{ adm.correo }}</small>
+                                {% if adm.puesto %}
+                                <br><small class="badge bg-secondary mt-1">{{ adm.puesto }}</small>
+                                {% endif %}
+                            </div>
+                            <form action="{{ url_for('eliminar_admin', id=adm.id_administrador) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar a {{ adm.nombre_completo }}?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-shield-x display-4 opacity-50 mb-3 d-block"></i>
+                        <p>No hay administradores.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nuevo Estudiante -->
+<div class="modal fade" id="modalNuevoEstudiante" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sage-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Registrar Nuevo Estudiante</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('crear_estudiante') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">NOMBRE COMPLETO</label>
+                        <input type="text" class="form-control" name="nombre_completo" placeholder="Nombre y apellidos" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">MATRÍCULA</label>
+                        <input type="text" class="form-control" name="matricula" placeholder="Ej: 2024001" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">CORREO INSTITUCIONAL</label>
+                        <input type="email" class="form-control" name="correo" placeholder="alumno@upq.edu.mx" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">CONTRASEÑA</label>
+                        <input type="password" class="form-control" name="contrasena" minlength="6" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold">CARRERA</label>
+                        <select class="form-select" name="carrera" required>
+                            <option value="" disabled selected>Seleccionar carrera...</option>
+                            <option value="sistemas">Sistemas</option>
+                            <option value="mecatronica">Mecatrónica</option>
+                            <option value="ingenieria de datos">Ingeniería de Datos</option>
+                            <option value="automotriz">Automotriz</option>
+                            <option value="negocios internacionales">Negocios Internacionales</option>
+                            <option value="administracion ">Administración</option>
+                            <option value="manufactura">Manufactura</option>
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-2">
+                            <i class="bi bi-person-plus me-2"></i>Registrar Estudiante
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nuevo Administrador -->
+<div class="modal fade" id="modalNuevoAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sage-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Registrar Nuevo Administrador</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('crear_administrador') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">NOMBRE COMPLETO</label>
+                        <input type="text" class="form-control" name="nombre_completo" placeholder="Nombre y apellidos" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">PUESTO</label>
+                        <input type="text" class="form-control" name="puesto" placeholder="Ej: Coordinador de laboratorio">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">CORREO INSTITUCIONAL</label>
+                        <input type="email" class="form-control" name="correo" placeholder="admin@universidad.edu.mx" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold">CONTRASEÑA</label>
+                        <input type="password" class="form-control" name="contrasena" minlength="6" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-2">
+                            <i class="bi bi-shield-check me-2"></i>Registrar Administrador
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

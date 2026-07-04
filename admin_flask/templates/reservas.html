@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Control de Reservas{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="dashboard-title">Historial y Control de Reservas</h1>
+        <div>
+            <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#modalNuevaIndividual">
+                <i class="bi bi-calendar-event me-2"></i>Agendar Individual
+            </button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaClase">
+                <i class="bi bi-calendar-plus me-2"></i>Agendar Semestral
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de reservas existentes -->
+    <div class="card neon-box">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo</th>
+                            <th>Equipo / Espacio</th>
+                            <th>Fechas y Horas</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reserva in reservas %}
+                        <tr>
+                            <td><strong>#{{ reserva.id_reserva }}</strong></td>
+                            <td><span class="badge bg-primary">{{ reserva.tipo_reserva | upper }}</span></td>
+                            <td>
+                                <div class="small">
+                                    {% if reserva.id_equipo %}
+                                    <i class="bi bi-pc-display me-1"></i> Eq: {{ reserva.id_equipo }}<br>
+                                    {% endif %}
+                                    <i class="bi bi-pin-map me-1"></i> Esp: {{ reserva.id_espacio }}
+                                    {% if reserva.id_clase %}
+                                    <br><i class="bi bi-book me-1"></i> Clase: {{ reserva.id_clase }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small text-muted">
+                                    <strong>Inicio:</strong> {{ reserva.fecha_hora_inicio }}<br>
+                                    <strong>Fin:</strong> {{ reserva.fecha_hora_fin }}
+                                </div>
+                            </td>
+                            <td>
+                                {% if reserva.estado == 'activa' %}
+                                <span class="badge bg-success">Activa</span>
+                                {% elif reserva.estado == 'cancelada' %}
+                                <span class="badge bg-danger">Cancelada</span>
+                                {% elif reserva.estado == 'completada' %}
+                                <span class="badge bg-secondary">Completada</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">{{ reserva.estado }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if reserva.estado == 'activa' %}
+                                <form action="{{ url_for('cancelar_reserva', id=reserva.id_reserva) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas cancelar esta reserva?');">
+                                    <input type="hidden" name="motivo" value="Cancelada por administrador">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancelar Reserva">
+                                        <i class="bi bi-x-circle"></i> Cancelar
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No existen reservas registradas actualmente.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Agendar Clase Semestral (16 semanas) -->
+<div class="modal fade" id="modalNuevaClase" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content sage-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-calendar-range me-2"></i>Agendar Clase Semestral
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info small mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Se creará una reserva automática <strong>cada semana</strong> en el mismo día y horario durante las próximas <strong>16 semanas (4 meses)</strong>.
+                    El espacio completo quedará reservado para la clase.
+                </div>
+                <form action="{{ url_for('crear_reserva_clase') }}" method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">CLASE</label>
+                            <select class="form-select" name="id_clase" required>
+                                <option value="" disabled selected>Seleccionar clase...</option>
+                                {% for clase in clases %}
+                                <option value="{{ clase.id_clase }}">{{ clase.nombre }} — {{ clase.materia }} ({{ clase.grupo }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">ESPACIO</label>
+                            <select class="form-select" name="id_espacio" required>
+                                <option value="" disabled selected>Seleccionar espacio...</option>
+                                {% for esp in espacios %}
+                                <option value="{{ esp.id_espacio }}">{{ esp.nombre }} — {{ esp.edificio }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">DÍA DE LA SEMANA</label>
+                            <select class="form-select" name="dia_semana" required>
+                                <option value="0">Lunes</option>
+                                <option value="1">Martes</option>
+                                <option value="2">Miércoles</option>
+                                <option value="3">Jueves</option>
+                                <option value="4">Viernes</option>
+                                <option value="5">Sábado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA INICIO</label>
+                            <input type="time" class="form-control" name="hora_inicio" value="07:00" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA FIN</label>
+                            <input type="time" class="form-control" name="hora_fin" value="09:00" required>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-2">
+                            <i class="bi bi-calendar-check me-2"></i>Crear 16 Reservas Semanales
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal: Agendar Reserva Individual -->
+<div class="modal fade" id="modalNuevaIndividual" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content sage-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-calendar-event me-2"></i>Agendar Reserva Individual
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info small mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Se creará una reserva única para un día específico.
+                </div>
+                <form action="{{ url_for('crear_reserva_individual') }}" method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">ESPACIO</label>
+                            <select class="form-select" name="id_espacio" id="ind_espacio" required>
+                                <option value="" disabled selected>Seleccionar espacio...</option>
+                                {% for esp in espacios %}
+                                <option value="{{ esp.id_espacio }}" data-tipo="{{ esp.tipo_espacio }}">{{ esp.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">EQUIPO (opcional)</label>
+                            <select class="form-select" name="id_equipo" id="ind_equipo">
+                                <option value="" selected>Espacio completo (sin equipo)</option>
+                            </select>
+                            <small class="text-muted" id="ind_equipo_hint">Selecciona un espacio para ver sus equipos</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">TIPO DE RESERVA</label>
+                            <select class="form-select" name="tipo_beneficiario" id="tipo_beneficiario" required>
+                                <option value="clase" selected>Clase</option>
+                                <option value="estudiante">Estudiante</option>
+                                <option value="evento">Evento</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label text-muted small fw-bold">ID BENEFICIARIO (Clase, Estudiante o Evento)</label>
+                            <input type="number" class="form-control" name="id_beneficiario" placeholder="Ingrese el ID del beneficiario" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">FECHA</label>
+                            <input type="date" class="form-control" name="fecha" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA INICIO</label>
+                            <input type="time" class="form-control" name="hora_inicio" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA FIN</label>
+                            <input type="time" class="form-control" name="hora_fin" required>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-primary py-2">
+                            <i class="bi bi-calendar-check me-2"></i>Agendar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Dynamic equipment loading for individual reservation
+const indEspacio = document.getElementById('ind_espacio');
+const indEquipo = document.getElementById('ind_equipo');
+const indEquipoHint = document.getElementById('ind_equipo_hint');
+
+if (indEspacio) {
+    indEspacio.addEventListener('change', async function() {
+        const espacioId = this.value;
+        indEquipo.innerHTML = '<option value="" selected>Cargando...</option>';
+        
+        try {
+            const resp = await fetch('/api/equipos_por_espacio/' + espacioId);
+            const equipos = await resp.json();
+            
+            indEquipo.innerHTML = '<option value="" selected>Espacio completo (sin equipo)</option>';
+            
+            if (equipos.length > 0) {
+                equipos.forEach(eq => {
+                    const opt = document.createElement('option');
+                    opt.value = eq.id_equipo;
+                    opt.textContent = eq.nombre_equipo + ' (' + eq.estado_operativo + ')';
+                    if (eq.estado_operativo !== 'operativo') {
+                        opt.disabled = true;
+                        opt.textContent += ' - No disponible';
+                    }
+                    indEquipo.appendChild(opt);
+                });
+                indEquipoHint.textContent = equipos.length + ' equipo(s) encontrado(s)';
+            } else {
+                indEquipoHint.textContent = 'Este espacio no tiene equipos registrados';
+            }
+        } catch(e) {
+            indEquipo.innerHTML = '<option value="" selected>Espacio completo (sin equipo)</option>';
+            indEquipoHint.textContent = 'Error al cargar equipos';
+        }
+    });
+}
+</script>
+{% endblock %}

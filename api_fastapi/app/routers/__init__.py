@@ -1,0 +1,9 @@
+from .auth import router as auth_router
+from .estudiantes import router as estudiantes_router
+from .administradores import router as administradores_router
+from .espacios import router as espacios_router
+from .equipos import router as equipos_router
+from .clases import router as clases_router
+from .eventos import router as eventos_router
+from .reservas import router as reservas_router
+from .estadisticas import router as estadisticas_router

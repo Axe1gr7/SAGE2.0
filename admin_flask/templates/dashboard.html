@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-4">
+    <h1 class="dashboard-title mb-4">PANEL DE CONTROL</h1>
+
+    <div class="row">
+        <!-- Tarjetas de Resumen -->
+        <div class="col-md-3 mb-4">
+            <div class="card bg-primary text-white neon-box text-center p-3 h-100">
+                <div class="card-body">
+                    <i class="bi bi-pin-map-fill fs-1"></i>
+                    <h5 class="card-title mt-2">Espacios</h5>
+                    <h2 class="display-5 fw-bold">{{ espacios }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card bg-success text-white neon-box text-center p-3 h-100">
+                <div class="card-body">
+                    <i class="bi bi-pc-display fs-1"></i>
+                    <h5 class="card-title mt-2">Equipos</h5>
+                    <h2 class="display-5 fw-bold">{{ equipos }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card bg-warning text-dark neon-box text-center p-3 h-100">
+                <div class="card-body">
+                    <i class="bi bi-calendar-check fs-1"></i>
+                    <h5 class="card-title mt-2">Reservas</h5>
+                    <h2 class="display-5 fw-bold">{{ reservas }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card bg-info text-dark neon-box text-center p-3 h-100">
+                <div class="card-body">
+                    <i class="bi bi-megaphone fs-1"></i>
+                    <h5 class="card-title mt-2">Próximos Eventos</h5>
+                    <h2 class="display-5 fw-bold">{{ eventos }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de Acciones Rápidas -->
+    <h3 class="dashboard-title mt-4 mb-3">Acciones Rápidas</h3>
+    <div class="dashboard-grid">
+        <a href="{{ url_for('espacios') }}" class="neon-box dashboard-card">
+            <i class="bi bi-pin-map-fill card-icon"></i>
+            <span class="card-label">Gestionar Espacios</span>
+        </a>
+
+        <a href="{{ url_for('equipos') }}" class="neon-box dashboard-card">
+            <i class="bi bi-pc-display card-icon"></i>
+            <span class="card-label">Inventario de Equipos</span>
+        </a>
+
+        <a href="{{ url_for('reservas') }}" class="neon-box dashboard-card">
+            <i class="bi bi-calendar-range card-icon"></i>
+            <span class="card-label">Ver Reservas</span>
+        </a>
+
+        <a href="{{ url_for('eventos') }}" class="neon-box dashboard-card">
+            <i class="bi bi-megaphone card-icon"></i>
+            <span class="card-label">Gestionar Eventos</span>
+        </a>
+    </div>
+    <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+            <h3 class="dashboard-title mb-3" style="font-size: 1.5rem; text-align: left;">Espacios Más Reservados</h3>
+            <div class="neon-box p-3 h-100">
+                <ul class="list-group list-group-flush bg-transparent">
+                    {% for stat in espacios_top %}
+                    <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between align-items-center">
+                        {{ stat.nombre }}
+                        <span class="badge bg-primary rounded-pill">{{ stat.total }} reservas</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item bg-transparent text-light border-secondary">No hay datos suficientes.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <h3 class="dashboard-title mb-3" style="font-size: 1.5rem; text-align: left;">Horarios con Más Demanda</h3>
+            <div class="neon-box p-3 h-100">
+                <ul class="list-group list-group-flush bg-transparent">
+                    {% for stat in horarios_top %}
+                    <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between align-items-center">
+                        Módulo: {{ stat.hora }}
+                        <span class="badge bg-success rounded-pill">{{ stat.total }} reservas</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item bg-transparent text-light border-secondary">No hay datos suficientes.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
