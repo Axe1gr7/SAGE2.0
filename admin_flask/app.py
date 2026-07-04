@@ -277,6 +277,75 @@ def eventos():
         eventos_data = []
     return render_template('eventos.html', eventos=eventos_data)
 
+@app.route('/eventos/create', methods=['POST'])
+@admin_required
+def crear_evento():
+    nombre = request.form.get('nombre')
+    descripcion = request.form.get('descripcion')
+    fecha_inicio = request.form.get('fecha_inicio')
+    fecha_fin = request.form.get('fecha_fin')
+
+    if not nombre:
+        flash('El nombre del evento es obligatorio.', 'danger')
+        return redirect(url_for('eventos'))
+
+    payload = {
+        'nombre': nombre,
+        'descripcion': descripcion
+    }
+    if fecha_inicio:
+        payload['fecha_inicio'] = fecha_inicio
+    if fecha_fin:
+        payload['fecha_fin'] = fecha_fin
+
+    resp = api_request('/eventos', method='POST', json=payload)
+    if isinstance(resp, dict) and 'error' in resp:
+        flash(f'Error al crear evento: {resp.get("error", "Error desconocido")}', 'danger')
+    else:
+        flash('Evento creado exitosamente.', 'success')
+
+    return redirect(url_for('eventos'))
+
+@app.route('/eventos/update/<int:id>', methods=['POST'])
+@admin_required
+def editar_evento(id):
+    nombre = request.form.get('nombre')
+    descripcion = request.form.get('descripcion')
+    fecha_inicio = request.form.get('fecha_inicio')
+    fecha_fin = request.form.get('fecha_fin')
+
+    payload = {}
+    if nombre:
+        payload['nombre'] = nombre
+    if descripcion is not None:
+        payload['descripcion'] = descripcion
+    if fecha_inicio:
+        payload['fecha_inicio'] = fecha_inicio
+    if fecha_fin:
+        payload['fecha_fin'] = fecha_fin
+
+    if not payload:
+        flash('No se proporcionaron cambios para actualizar.', 'warning')
+        return redirect(url_for('eventos'))
+
+    resp = api_request(f'/eventos/{id}', method='PUT', json=payload)
+    if isinstance(resp, dict) and 'error' in resp:
+        flash(f'Error al actualizar evento: {resp.get("error", "Error desconocido")}', 'danger')
+    else:
+        flash('Evento actualizado exitosamente.', 'success')
+
+    return redirect(url_for('eventos'))
+
+@app.route('/eventos/delete/<int:id>', methods=['POST'])
+@admin_required
+def eliminar_evento(id):
+    resp = api_request(f'/eventos/{id}', method='DELETE')
+    if isinstance(resp, dict) and 'error' in resp:
+        flash(f'Error al eliminar evento: {resp.get("error", "Error desconocido")}', 'danger')
+    else:
+        flash('Evento eliminado correctamente.', 'success')
+    return redirect(url_for('eventos'))
+
 # ==========================================
 # GESTIÓN DE USUARIOS
 # ==========================================

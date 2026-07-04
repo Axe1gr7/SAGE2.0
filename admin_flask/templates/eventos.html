@@ -4,35 +4,69 @@
 
 {% block content %}
 <div class="container-fluid mt-4 px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="dashboard-title">Eventos</h1>
-        <button class="btn btn-primary"><i class="bi bi-megaphone me-2"></i>Crear Nuevo Evento</button>
+    <div class="event-page-header">
+        <div class="page-title-group">
+            <h1 class="dashboard-title mb-2">Eventos</h1>
+            <p class="text-muted small mb-0">Administra los eventos próximos: crea, edita y elimina fácilmente desde una interfaz moderna.</p>
+        </div>
+        <div class="page-actions">
+            <span class="event-summary-pill">
+                <i class="bi bi-calendar-event-fill"></i>
+                <span>{{ eventos|length }} eventos</span>
+            </span>
+            <button class="btn btn-primary btn-create-event" id="btnCrearEvento" data-bs-toggle="modal" data-bs-target="#modalEvento">
+                <i class="bi bi-megaphone me-2"></i>Nuevo Evento
+            </button>
+        </div>
     </div>
 
-    <div class="row">
+    <div class="row gy-4">
         {% for evento in eventos %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 neon-box">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-truncate" title="{{ evento.titulo }}">{{ evento.titulo }}</h5>
+        <div class="col-sm-12 col-md-6 col-xl-4">
+            <div class="card event-card h-100 border-0 shadow-none overflow-hidden">
+                <div class="card-header d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1 text-truncate" title="{{ evento.nombre }}">{{ evento.nombre }}</h5>
+                        <div class="meta-line">
+                            <span class="badge event-start">Inicio</span>
+                            {% if evento.fecha_inicio %}
+                                {{ evento.fecha_inicio[:16] | replace('T', ' ') }}
+                            {% else %}
+                                Fecha por definir
+                            {% endif %}
+                        </div>
+                    </div>
                     <div class="dropdown">
-                        <button class="btn btn-link text-white p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-sm btn-outline-light text-white p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-three-dots-vertical"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Editar</a></li>
+                            <li>
+                                <a class="dropdown-item btn-editar-evento" href="#" data-id="{{ evento.id_evento }}" data-nombre="{{ evento.nombre | e }}" data-descripcion="{{ evento.descripcion | default('', true) | e }}" data-fecha-inicio="{{ evento.fecha_inicio | default('', true) }}" data-fecha-fin="{{ evento.fecha_fin | default('', true) }}">
+                                    <i class="bi bi-pencil me-2"></i>Editar
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Eliminar</a></li>
+                            <li>
+                                <form action="{{ url_for('eliminar_evento', id=evento.id_evento) }}" method="POST" class="m-0">
+                                    <button type="submit" class="dropdown-item text-danger" onclick="return confirm('¿Eliminar este evento?');">
+                                        <i class="bi bi-trash me-2"></i>Eliminar
+                                    </button>
+                                </form>
+                            </li>
                         </ul>
                     </div>
                 </div>
                 <div class="card-body">
-                    <p class="card-text text-muted small">{{ evento.descripcion | default('Sin descripción.', true) }}</p>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><i class="bi bi-calendar-event me-2 text-primary"></i> <strong>Inicio:</strong> {{ evento.fecha_inicio | default('TBD', true) }}</li>
-                        <li class="mb-2"><i class="bi bi-calendar-x me-2 text-danger"></i> <strong>Fin:</strong> {{ evento.fecha_fin | default('TBD', true) }}</li>
-                        <li><i class="bi bi-geo-alt me-2 text-success"></i> <strong>Ubicación:</strong> {{ evento.ubicacion | default('Por definir', true) }}</li>
-                    </ul>
+                    <p class="card-text mb-4">{{ evento.descripcion | default('Sin descripción.', true) }}</p>
+                    <div class="event-details">
+                        <div class="detail-row"><i class="bi bi-calendar-event"></i><strong>Inicio:</strong> {{ evento.fecha_inicio | default('TBD', true) | replace('T', ' ') }}</div>
+                        <div class="detail-row"><i class="bi bi-calendar-x"></i><strong>Fin:</strong> {{ evento.fecha_fin | default('TBD', true) | replace('T', ' ') }}</div>
+                    </div>
+                    <div class="event-footer">
+                        <span class="event-tag">Evento activo</span>
+                        <small class="text-muted">ID #{{ evento.id_evento }}</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -46,4 +80,96 @@
         {% endfor %}
     </div>
 </div>
+
+<!-- Modal Crear / Editar Evento -->
+<div class="modal fade" id="modalEvento" tabindex="-1" aria-labelledby="modalEventoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content sage-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="modalEventoLabel">Nuevo Evento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="formEvento" method="POST" action="{{ url_for('crear_evento') }}">
+                <input type="hidden" name="id_evento" id="idEvento" value="">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">Nombre del evento</label>
+                            <input type="text" class="form-control neon-input text-white" name="nombre" id="nombreEvento" placeholder="Título del evento" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">Descripción</label>
+                            <textarea class="form-control neon-input text-white" name="descripcion" id="descripcionEvento" rows="4" placeholder="Descripción breve..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Fecha y hora de inicio</label>
+                            <input type="datetime-local" class="form-control neon-input text-white" name="fecha_inicio" id="fechaInicioEvento">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Fecha y hora de fin</label>
+                            <input type="datetime-local" class="form-control neon-input text-white" name="fecha_fin" id="fechaFinEvento">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="submitEventoButton">Guardar evento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const btnCrearEvento = document.getElementById('btnCrearEvento');
+    const modalEventoLabel = document.getElementById('modalEventoLabel');
+    const formEvento = document.getElementById('formEvento');
+    const submitEventoButton = document.getElementById('submitEventoButton');
+    const idEventoInput = document.getElementById('idEvento');
+    const nombreEventoInput = document.getElementById('nombreEvento');
+    const descripcionEventoInput = document.getElementById('descripcionEvento');
+    const fechaInicioInput = document.getElementById('fechaInicioEvento');
+    const fechaFinInput = document.getElementById('fechaFinEvento');
+
+    const eventModalElement = document.getElementById('modalEvento');
+    const eventModal = new bootstrap.Modal(eventModalElement);
+
+    function formatearDatetimeLocal(value) {
+        if (!value) return '';
+        value = value.replace('Z', '');
+        if (value.indexOf('T') === -1) {
+            value = value.replace(' ', 'T');
+        }
+        return value.slice(0, 16);
+    }
+
+    btnCrearEvento.addEventListener('click', () => {
+        modalEventoLabel.textContent = 'Crear nuevo evento';
+        formEvento.action = '{{ url_for('crear_evento') }}';
+        submitEventoButton.textContent = 'Crear evento';
+        idEventoInput.value = '';
+        nombreEventoInput.value = '';
+        descripcionEventoInput.value = '';
+        fechaInicioInput.value = '';
+        fechaFinInput.value = '';
+    });
+
+    document.querySelectorAll('.btn-editar-evento').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            modalEventoLabel.textContent = 'Editar evento';
+            const eventoId = button.dataset.id;
+            formEvento.action = `/eventos/update/${eventoId}`;
+            submitEventoButton.textContent = 'Actualizar evento';
+            idEventoInput.value = eventoId;
+            nombreEventoInput.value = button.dataset.nombre || '';
+            descripcionEventoInput.value = button.dataset.descripcion || '';
+            fechaInicioInput.value = formatearDatetimeLocal(button.dataset.fechaInicio || '');
+            fechaFinInput.value = formatearDatetimeLocal(button.dataset.fechaFin || '');
+            eventModal.show();
+        });
+    });
+</script>
 {% endblock %}

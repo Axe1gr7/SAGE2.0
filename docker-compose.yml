@@ -31,6 +31,9 @@ services:
     networks:
       - sage_network
     restart: unless-stopped
+    volumes:
+      - ./api_fastapi:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   admin_flask:
     build:
@@ -41,11 +44,16 @@ services:
       - "5050:5050"
     environment:
       - API_URL=http://api_fastapi:8000
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
     depends_on:
       - api_fastapi
     networks:
       - sage_network
     restart: unless-stopped
+    volumes:
+      - ./admin_flask:/app
+    command: flask run --host=0.0.0.0 --port=5050 --reload
 
 
 
