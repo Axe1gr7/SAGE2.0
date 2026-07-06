@@ -8,35 +8,36 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
             <h1 class="dashboard-title" style="text-align:left">Espacios & Laboratorios</h1>
-            <div class="text-muted small">Filtra por nombre y tipo (incluye laboratorios).</div>
+            <div class="small text-muted">Filtra por nombre y tipo (incluye laboratorios).</div>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-2"></i>Imprimir</button>
-            <button class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nuevo Espacio</button>
+            <button class="btn btn-outline-secondary sage-btn-input" onclick="window.print()"><i class="bi bi-printer me-2"></i>Imprimir</button>
+            <button class="btn btn-primary sage-btn-input" data-bs-toggle="modal" data-bs-target="#modalNuevoEspacio">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Espacio
+            </button>
         </div>
     </div>
 
     <div class="card neon-box mb-4">
         <div class="card-body">
             <form class="neon-filter-bar" method="GET" action="{{ url_for('espacios') }}">
-
                 <div class="row g-2 align-items-end">
                     <div class="col-12 col-md-4">
-                        <label class="form-label text-muted small fw-bold">Buscar</label>
-                        <input class="neon-input" type="text" name="q" value="{{ request.args.get('q','') }}" placeholder="Nombre o descripción" />
+                        <label for="q" class="form-label small fw-bold text-muted">Buscar</label>
+                        <input id="q" class="neon-input" type="text" name="q" value="{{ request.args.get('q','') }}" placeholder="Nombre o descripción" />
                     </div>
                     <div class="col-12 col-md-3">
-                        <label class="form-label text-muted small fw-bold">Tipo de espacio</label>
-                        <select class="form-select neon-input" name="tipo_espacio">
+                        <label for="tipo_espacio" class="form-label small fw-bold text-muted">Tipo de espacio</label>
+                        <select id="tipo_espacio" class="form-select neon-input" name="tipo_espacio">
                             <option value="" {% if not request.args.get('tipo_espacio') %}selected{% endif %}>Todos</option>
                             <option value="laboratorio" {% if request.args.get('tipo_espacio')=='laboratorio' %}selected{% endif %}>Laboratorio</option>
                         </select>
                     </div>
                     <div class="col-12 col-md-2 d-grid">
-                        <button class="btn btn-primary py-2" type="submit"><i class="bi bi-funnel me-2"></i>Filtrar</button>
+                        <button class="btn btn-primary sage-btn-input" type="submit"><i class="bi bi-funnel me-2"></i>Filtrar</button>
                     </div>
                     <div class="col-12 col-md-3 d-grid">
-                        <a class="btn btn-outline-secondary py-2" href="{{ url_for('espacios') }}"><i class="bi bi-x-circle me-2"></i>Limpiar</a>
+                        <a class="btn btn-outline-secondary sage-btn-input" href="{{ url_for('espacios') }}"><i class="bi bi-x-circle me-2"></i>Limpiar</a>
                     </div>
                 </div>
             </form>
@@ -62,28 +63,42 @@
                     <span class="badge bg-primary">ID: {{ espacio.id_espacio or espacio.id }}</span>
                 </div>
                 <div class="mt-3 d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-primary flex-grow-1"><i class="bi bi-pencil me-2"></i>Editar</button>
-                    <button class="btn btn-sm btn-outline-danger flex-grow-1"><i class="bi bi-trash me-2"></i>Eliminar</button>
+                    <!-- Botón Editar con datos para el modal -->
+                    <button class="btn btn-sm btn-outline-primary flex-grow-1 btn-editar-espacio"
+                            data-id="{{ espacio.id_espacio or espacio.id }}"
+                            data-nombre="{{ espacio.nombre | e }}"
+                            data-tipo="{{ espacio.tipo_espacio | default('', true) | e }}"
+                            data-ubicacion="{{ espacio.ubicacion | default('', true) | e }}"
+                            data-capacidad="{{ espacio.capacidad | default(0) }}"
+                            data-apertura="{{ espacio.horario_apertura | default('', true) | truncate(5, true, '') }}"
+                            data-cierre="{{ espacio.horario_cierre | default('', true) | truncate(5, true, '') }}"
+                            data-disponible="{{ 'true' if espacio.disponible else 'false' }}">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </button>
+                    <!-- Botón Eliminar con formulario -->
+                    <form action="{{ url_for('espacios_delete', id=espacio.id_espacio or espacio.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar el espacio {{ espacio.nombre | e }}?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger flex-grow-1 w-100"><i class="bi bi-trash me-2"></i>Eliminar</button>
+                    </form>
                 </div>
             </div>
         </div>
         {% else %}
         <div class="col-12">
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-geo-alt display-4 opacity-50 mb-3 d-block"></i>
-                No hay espacios con esos filtros.
+            <div class="text-center py-5">
+                <i class="bi bi-geo-alt display-4 opacity-50 mb-3 d-block" style="color: inherit;"></i>
+                <span class="text-muted">No hay espacios con esos filtros.</span>
             </div>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Tabla imprimible -->
-    <div class="card neon-box mt-4 printable-only">
+    <!-- Tabla resumen estilo SAGE -->
+    <div class="card neon-box mt-4">
         <div class="card-body">
-            <h5 class="mb-3">Tabla imprimible</h5>
+            <h5 class="mb-3">Listado completo</h5>
             <div class="table-responsive">
-                <table class="table table-hover table-striped">
-                    <thead class="table-dark">
+                <table class="neon-table w-100">
+                    <thead>
                         <tr>
                             <th>ID</th>
                             <th>Nombre</th>
@@ -97,9 +112,13 @@
                         <tr>
                             <td>{{ espacio.id_espacio or espacio.id }}</td>
                             <td><strong>{{ espacio.nombre }}</strong></td>
-                            <td>{{ espacio.descripcion }}</td>
+                            <td>{{ espacio.descripcion or '—' }}</td>
                             <td>{{ espacio.capacidad }} personas</td>
                             <td>{{ espacio.tipo_espacio or '—' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Sin datos para mostrar</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -107,11 +126,132 @@
             </div>
         </div>
     </div>
+
 </div>
 
+<!-- Modal: Nuevo / Editar Espacio -->
+<div class="modal fade" id="modalNuevoEspacio" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content sage-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="modalEspacioLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Registrar Nuevo Espacio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEspacio" method="POST" action="{{ url_for('espacios_create') }}">
+                    <!-- ID oculto para edición -->
+                    <input type="hidden" name="id_espacio" id="hiddenIdEspacio" value="">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">TIPO DE ESPACIO</label>
+                            <select class="form-select neon-input" name="tipo_espacio" id="tipoEspacio" required>
+                                <option value="" disabled>Seleccionar tipo...</option>
+                                <option value="laboratorio">Laboratorio</option>
+                                <option value="salon">Salón</option>
+                                <option value="auditorio">Auditorio</option>
+                                <option value="sala de juntas">Sala de juntas</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">NOMBRE</label>
+                            <input type="text" class="form-control neon-input" name="nombre" id="nombreEspacio" placeholder="Ej: Lab. Redes 3" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">UBICACIÓN</label>
+                        <input type="text" class="form-control neon-input" name="ubicacion" id="ubicacionEspacio" placeholder="Edificio / Planta / Número">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted small fw-bold">CAPACIDAD</label>
+                            <input type="number" class="form-control neon-input" name="capacidad" id="capacidadEspacio" value="0" min="0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA APERTURA</label>
+                            <input type="time" class="form-control neon-input" name="horario_apertura" id="aperturaEspacio" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold">HORA CIERRE</label>
+                            <input type="time" class="form-control neon-input" name="horario_cierre" id="cierreEspacio" required>
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="disponible" id="chkDisponible" checked>
+                        <label class="form-check-label text-muted small fw-bold" for="chkDisponible">Disponible al crearse</label>
+                    </div>
+                    <hr>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-2" id="submitEspacioBtn">
+                            <i class="bi bi-check-circle me-2"></i>Crear Espacio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin_filters.js') }}"></script>
-{% endblock %}
+<script>
+// Lógica para editar espacio
+const modalEspacio = document.getElementById('modalNuevoEspacio');
+const bsModalEspacio = new bootstrap.Modal(modalEspacio);
+const modalLabel = document.getElementById('modalEspacioLabel');
+const formEspacio = document.getElementById('formEspacio');
+const submitBtn = document.getElementById('submitEspacioBtn');
 
+document.querySelectorAll('.btn-editar-espacio').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Obtener datos del dataset
+        const id = btn.dataset.id;
+        const nombre = btn.dataset.nombre;
+        const tipo = btn.dataset.tipo;
+        const ubicacion = btn.dataset.ubicacion;
+        const capacidad = btn.dataset.capacidad;
+        const apertura = btn.dataset.apertura;
+        const cierre = btn.dataset.cierre;
+        const disponible = btn.dataset.disponible === 'true';
+
+        // Cambiar modal a modo edición
+        modalLabel.innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Espacio';
+        formEspacio.action = `/espacios/update/${id}`;
+        submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Actualizar Espacio';
+
+        // Rellenar campos
+        document.getElementById('tipoEspacio').value = tipo;
+        document.getElementById('nombreEspacio').value = nombre;
+        document.getElementById('ubicacionEspacio').value = ubicacion || '';
+        document.getElementById('capacidadEspacio').value = capacidad;
+        document.getElementById('aperturaEspacio').value = apertura;
+        document.getElementById('cierreEspacio').value = cierre;
+        document.getElementById('chkDisponible').checked = disponible;
+        document.getElementById('hiddenIdEspacio').value = id;
+
+        bsModalEspacio.show();
+    });
+});
+
+// Resetear el modal cuando se abre para crear (ya que el botón "Nuevo Espacio" lo dispara)
+modalEspacio.addEventListener('show.bs.modal', (event) => {
+    // Si el modal se abre por el botón de crear (sin editar), podemos resetear a valores por defecto
+    if (!event.relatedTarget || !event.relatedTarget.classList.contains('btn-editar-espacio')) {
+        modalLabel.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Registrar Nuevo Espacio';
+        formEspacio.action = "{{ url_for('espacios_create') }}";
+        submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Crear Espacio';
+        document.getElementById('hiddenIdEspacio').value = '';
+        document.getElementById('tipoEspacio').value = '';
+        document.getElementById('nombreEspacio').value = '';
+        document.getElementById('ubicacionEspacio').value = '';
+        document.getElementById('capacidadEspacio').value = '0';
+        document.getElementById('aperturaEspacio').value = '';
+        document.getElementById('cierreEspacio').value = '';
+        document.getElementById('chkDisponible').checked = true;
+    }
+});
+</script>
+{% endblock %}

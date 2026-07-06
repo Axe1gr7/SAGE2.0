@@ -7,10 +7,10 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="dashboard-title">Gestión de Talleres</h1>
         <div>
-            <button class="btn btn-outline-primary sage-btn me-2" data-bs-toggle="modal" data-bs-target="#modalCocurricular">
+            <button class="btn btn-outline-primary sage-btn-input me-2" data-bs-toggle="modal" data-bs-target="#modalCocurricular">
                 <i class="bi bi-calendar-range me-2"></i>Nuevo Cocurricular
             </button>
-            <button class="btn btn-primary sage-btn" data-bs-toggle="modal" data-bs-target="#modalTallerEspecial">
+            <button class="btn btn-primary sage-btn-input" data-bs-toggle="modal" data-bs-target="#modalTallerEspecial">
                 <i class="bi bi-lightning-charge-fill me-2"></i>Nuevo Taller Especial
             </button>
         </div>
@@ -25,7 +25,7 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-especial" data-bs-toggle="pill" data-bs-target="#pane-especial" type="button" role="tab">
-                <i class="bi bi-lightning-charge me-2"></i>Talleres Especiales <span class="badge bg-warning text-dark ms-1">{{ talleres_especiales|length }}</span>
+                <i class="bi bi-lightning-charge me-2"></i>Talleres Especiales <span class="badge bg-warning ms-1">{{ talleres_especiales|length }}</span>
             </button>
         </li>
     </ul>
@@ -43,8 +43,8 @@
                 <div class="card-body">
                     {% if cocurriculares and cocurriculares|length > 0 %}
                     <div class="table-responsive">
-                        <table class="table table-hover table-striped align-middle">
-                            <thead class="table-dark">
+                        <table class="neon-table w-100">
+                            <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Nombre</th>
@@ -61,7 +61,7 @@
                                     <td>{{ coc.nombre }}</td>
                                     <td>{{ coc.docente }}</td>
                                     <td><code>{{ coc.grupo }}</code></td>
-                                    <td><span class="badge bg-info text-dark">{{ coc.horario or 'Sin definir' }}</span></td>
+                                    <td><span class="badge bg-info">{{ coc.horario or 'Sin definir' }}</span></td>
                                     <td>
                                         {% if coc.estatus == 0 %}
                                         <span class="badge bg-success rounded-pill px-3">Activo</span>
@@ -75,9 +75,9 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center text-muted py-5">
+                    <div class="text-center py-5">
                         <i class="bi bi-book display-4 opacity-50 mb-3 d-block"></i>
-                        <p>No hay actividades cocurriculares registradas.</p>
+                        <p class="text-muted">No hay actividades cocurriculares registradas.</p>
                         <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCocurricular">
                             <i class="bi bi-plus-circle me-1"></i>Crear primera actividad
                         </button>
@@ -97,8 +97,8 @@
                 <div class="card-body">
                     {% if talleres_especiales and talleres_especiales|length > 0 %}
                     <div class="table-responsive">
-                        <table class="table table-hover table-striped align-middle">
-                            <thead class="table-dark">
+                        <table class="neon-table w-100">
+                            <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Nombre</th>
@@ -113,7 +113,7 @@
                                 <tr>
                                     <td><strong>#{{ taller.id_evento }}</strong></td>
                                     <td>{{ taller.nombre }}</td>
-                                    <td><span class="text-muted small">{{ taller.descripcion or '—' }}</span></td>
+                                    <td><span class="small">{{ taller.descripcion or '—' }}</span></td>
                                     <td>{{ taller.fecha_inicio or '—' }}</td>
                                     <td>{{ taller.fecha_fin or '—' }}</td>
                                     <td>
@@ -129,9 +129,9 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center text-muted py-5">
+                    <div class="text-center py-5">
                         <i class="bi bi-lightning display-4 opacity-50 mb-3 d-block"></i>
-                        <p>No hay talleres especiales programados.</p>
+                        <p class="text-muted">No hay talleres especiales programados.</p>
                         <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalTallerEspecial">
                             <i class="bi bi-plus-circle me-1"></i>Programar primer taller
                         </button>
@@ -151,7 +151,7 @@
                 <h5 class="modal-title fw-bold">
                     <i class="bi bi-calendar-range me-2"></i>Registrar Actividad Cocurricular
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info small mb-4">
@@ -225,7 +225,7 @@
                 <h5 class="modal-title fw-bold">
                     <i class="bi bi-lightning-charge-fill me-2"></i>Programar Taller Especial
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning small mb-4">
