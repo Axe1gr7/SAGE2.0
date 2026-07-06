@@ -3,18 +3,19 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Fondo tipo gradiente oscuro */
+/* ========== FONDO OSCURO (original) ========== */
 .fondo {
     background: radial-gradient(circle at top, 
-    #283E5B 4%, 
+    #283E5B 0%, 
     #21334B 15%,
     #111C2A 41%, 
     #0E1723 53%, 
     #0C141F 60%
     );
+    transition: background 0.4s;
 }
 
-/* Card principal */
+/* ========== TARJETA (original) ========== */
 .login-card {
     width: 350px;
     border-radius: 20px;
@@ -31,22 +32,42 @@ body {
         0 0 0.83px rgba(116, 152, 199, 1);
 
     border: 2px solid #CBDDF4;
+    transition: background 0.4s, box-shadow 0.4s, border-color 0.4s;
 }
 
-/* Logo */
+/* ========== LOGO (imagen) ========== */
+
 .logo {
     width: 80px;
     border-radius: 10px;
     box-shadow: 0 0 15px #7498C7;
     background-color: #0C141F;
+    transition: box-shadow 0.4s, filter 0.4s;
 }
 
-/* Inputs */
+/* ========== TÍTULO ========== */
+.login-title {
+    color: #e2e8f0;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: color 0.4s;
+}
+
+/* ========== LABELS ========== */
+.form-label {
+    color: #CBDDF4;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.4s;
+}
+
+/* ========== INPUTS (original) ========== */
 .input-custom {
     background-color: #0C141F;
     border: 1px solid #38557B;
     color: #7498C7;
     border-radius: 10px;
+    transition: all 0.3s ease;
 }
 
 .input-custom::placeholder {
@@ -60,7 +81,7 @@ body {
     color: #7498C7;
 }
 
-/* Botón */
+/* ========== BOTÓN (original) ========== */
 .btn-login {
     background: #CBDDF4;
     border: none;
@@ -70,6 +91,7 @@ body {
     transition: all 0.3s ease;
     box-shadow: 0 0 10px #7498C7;
 }
+
 .btn-login:hover {
     background: linear-gradient(90deg, #CBDDF4, #a9c7ee);
     box-shadow:
@@ -78,7 +100,7 @@ body {
     transform: translateY(-2px) scale(1.02);
 }
 
-/* Links */
+/* ========== LINKS (original) ========== */
 .link {
     color: #00c6ff;
     text-decoration: none;
@@ -86,4 +108,95 @@ body {
 
 .link:hover {
     text-decoration: underline;
+}
+
+/* ========== BOTÓN DE TEMA (flotante) ========== */
+.theme-toggle-login {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
+    color: #CBDDF4;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.4s;
+    z-index: 10;
+}
+
+.theme-toggle-login:hover {
+    transform: scale(1.1);
+}
+
+/* =============================================
+   MODO CLARO (invertir todos los estilos)
+   ============================================= */
+body.light-mode .fondo {
+    background: radial-gradient(circle at top, 
+        #e2e8f0 0%, 
+        #cbd5e1 15%,
+        #94a3b8 41%,
+        #64748b 66%,
+        #475569 82%,
+        #334155 95%
+    );
+    /* Fondo más oscuro que la tarjeta blanca */
+}
+
+body.light-mode .login-card {
+    background: #ffffff;
+    border: 2px solid #cbd5e1;
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(0,0,0,0.05);
+}
+
+body.light-mode .logo-container {
+    background: #0C141F; /* se mantiene oscuro para el logo */
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+body.light-mode .login-title {
+    color: #1e293b;
+}
+
+body.light-mode .form-label {
+    color: #1e293b;
+}
+
+body.light-mode .input-custom {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+}
+
+body.light-mode .input-custom::placeholder {
+    color: #64748b;
+}
+
+body.light-mode .input-custom:focus {
+    box-shadow: 0 0 8px rgba(30, 58, 138, 0.4);
+    border-color: #1e3a8a;
+    color: #1e293b;
+}
+
+body.light-mode .btn-login {
+    background: #1e3a8a;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(30, 58, 138, 0.3);
+}
+
+body.light-mode .btn-login:hover {
+    background: linear-gradient(90deg, #2563eb, #1e3a8a);
+    box-shadow:
+        0 0 10px rgba(30, 58, 138, 0.4),
+        0 0 20px rgba(30, 58, 138, 0.2);
+}
+
+body.light-mode .theme-toggle-login {
+    color: #f8fafc;
+}
+
+body.light-mode .link {
+    color: #1e3a8a;
 }

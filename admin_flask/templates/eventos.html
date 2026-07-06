@@ -37,7 +37,7 @@
                         </div>
                     </div>
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-light text-white p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-sm btn-outline-light p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-three-dots-vertical"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
@@ -87,27 +87,27 @@
         <div class="modal-content sage-modal">
             <div class="modal-header border-0">
                 <h5 class="modal-title" id="modalEventoLabel">Nuevo Evento</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form id="formEvento" method="POST" action="{{ url_for('crear_evento') }}">
                 <input type="hidden" name="id_evento" id="idEvento" value="">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label text-muted small fw-bold">Nombre del evento</label>
-                            <input type="text" class="form-control neon-input text-white" name="nombre" id="nombreEvento" placeholder="Título del evento" required>
+                            <label for="nombreEvento" class="form-label text-muted small fw-bold">Nombre del evento</label>
+                            <input type="text" class="form-control neon-input" name="nombre" id="nombreEvento" placeholder="Título del evento" required>
                         </div>
                         <div class="col-12">
-                            <label class="form-label text-muted small fw-bold">Descripción</label>
-                            <textarea class="form-control neon-input text-white" name="descripcion" id="descripcionEvento" rows="4" placeholder="Descripción breve..."></textarea>
+                            <label for="descripcionEvento" class="form-label text-muted small fw-bold">Descripción</label>
+                            <textarea class="form-control neon-input" name="descripcion" id="descripcionEvento" rows="4" placeholder="Descripción breve..."></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Fecha y hora de inicio</label>
-                            <input type="datetime-local" class="form-control neon-input text-white" name="fecha_inicio" id="fechaInicioEvento">
+                            <label for="fechaInicioEvento" class="form-label text-muted small fw-bold">Fecha y hora de inicio</label>
+                            <input type="datetime-local" class="form-control neon-input" name="fecha_inicio" id="fechaInicioEvento">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Fecha y hora de fin</label>
-                            <input type="datetime-local" class="form-control neon-input text-white" name="fecha_fin" id="fechaFinEvento">
+                            <label for="fechaFinEvento" class="form-label text-muted small fw-bold">Fecha y hora de fin</label>
+                            <input type="datetime-local" class="form-control neon-input" name="fecha_fin" id="fechaFinEvento">
                         </div>
                     </div>
                 </div>
@@ -139,7 +139,7 @@
     function formatearDatetimeLocal(value) {
         if (!value) return '';
         value = value.replace('Z', '');
-        if (value.indexOf('T') === -1) {
+        if (!value.includes('T')) {
             value = value.replace(' ', 'T');
         }
         return value.slice(0, 16);
@@ -147,7 +147,7 @@
 
     btnCrearEvento.addEventListener('click', () => {
         modalEventoLabel.textContent = 'Crear nuevo evento';
-        formEvento.action = '{{ url_for('crear_evento') }}';
+        formEvento.action = '{{ url_for("crear_evento") }}';
         submitEventoButton.textContent = 'Crear evento';
         idEventoInput.value = '';
         nombreEventoInput.value = '';

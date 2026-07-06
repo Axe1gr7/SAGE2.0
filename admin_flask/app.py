@@ -36,6 +36,7 @@ def login():
         
         data = {'username': email, 'password': password, 'scope': 'admin'}
         resp = api_request('/auth/login', method='POST', data=data)
+        print("RESPUESTA LOGIN:", resp) 
 
         if not isinstance(resp, dict) or 'error' in resp:
             flash('Credenciales inválidas o sin permisos de administrador', 'danger')
@@ -138,7 +139,7 @@ def espacios_create():
         "horario_cierre": request.form.get("horario_cierre") + ":00" if len(request.form.get("horario_cierre", "")) == 5 else request.form.get("horario_cierre"),
         "disponible": request.form.get("disponible") == 'on'
     }
-    resp = api_request('/espacios/', method='POST', data=data)
+    resp = api_request('/espacios/', method='POST', json=data)
     if isinstance(resp, dict) and 'error' in resp:
         flash(f'Error al crear espacio: {resp["error"]}', 'danger')
     else:
@@ -157,7 +158,7 @@ def espacios_update(id):
         "horario_cierre": request.form.get("horario_cierre") + ":00" if len(request.form.get("horario_cierre", "")) == 5 else request.form.get("horario_cierre"),
         "disponible": request.form.get("disponible") == 'on'
     }
-    resp = api_request(f'/espacios/{id}', method='PUT', data=data)
+    resp = api_request(f'/espacios/{id}', method='PUT', json=data)
     if isinstance(resp, dict) and 'error' in resp:
         flash(f'Error al actualizar espacio: {resp["error"]}', 'danger')
     else:
@@ -352,6 +353,13 @@ def eliminar_evento(id):
 @app.route('/usuarios')
 @admin_required
 def usuarios():
+    token = session.get('admin_access_token')
+    print("=== USUARIOS ===")
+    print("Token presente:", token[:20] + "..." if token else "NINGUNO")
+    resp_est = api_request('/estudiantes', method='GET')
+    print("Respuesta /estudiantes:", resp_est)
+    resp_adm = api_request('/administradores', method='GET')
+    print("Respuesta /administradores:", resp_adm)
     estudiantes_data = api_request('/estudiantes', method='GET')
     if not isinstance(estudiantes_data, list):
         estudiantes_data = []

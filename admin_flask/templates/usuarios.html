@@ -7,10 +7,10 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="dashboard-title">Gestión de Usuarios</h1>
         <div>
-            <button class="btn btn-outline-primary sage-btn me-2" data-bs-toggle="modal" data-bs-target="#modalNuevoEstudiante">
+            <button class="btn btn-outline-primary sage-btn-input me-2" data-bs-toggle="modal" data-bs-target="#modalNuevoEstudiante">
                 <i class="bi bi-mortarboard-fill me-2"></i>Nuevo Estudiante
             </button>
-            <button class="btn btn-primary sage-btn" data-bs-toggle="modal" data-bs-target="#modalNuevoAdmin">
+            <button class="btn btn-primary sage-btn-input" data-bs-toggle="modal" data-bs-target="#modalNuevoAdmin">
                 <i class="bi bi-person-plus-fill me-2"></i>Nuevo Administrador
             </button>
         </div>
@@ -26,8 +26,8 @@
                 <div class="card-body">
                     {% if estudiantes and estudiantes|length > 0 %}
                     <div class="table-responsive">
-                        <table class="table table-hover table-striped align-middle">
-                            <thead class="table-dark">
+                        <table class="neon-table w-100">
+                            <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Matrícula</th>
@@ -44,8 +44,8 @@
                                     <td><strong>{{ est.id_estudiante }}</strong></td>
                                     <td><code>{{ est.matricula }}</code></td>
                                     <td>{{ est.nombre_completo }}</td>
-                                    <td><span class="text-muted small">{{ est.correo }}</span></td>
-                                    <td><span class="badge bg-info text-dark">{{ est.carrera }}</span></td>
+                                    <td><span class="small">{{ est.correo }}</span></td>
+                                    <td><span class="badge bg-info">{{ est.carrera }}</span></td>
                                     <td>
                                         {% if est.estatus == 0 %}
                                             <span class="badge bg-success rounded-pill px-3">Activo</span>
@@ -66,9 +66,9 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center text-muted py-5">
+                    <div class="text-center py-5">
                         <i class="bi bi-people display-4 opacity-50 mb-3 d-block"></i>
-                        <p>No hay estudiantes registrados.</p>
+                        <p class="text-muted">No hay estudiantes registrados.</p>
                     </div>
                     {% endif %}
                 </div>
@@ -105,9 +105,9 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <div class="text-center text-muted py-5">
+                    <div class="text-center py-5">
                         <i class="bi bi-shield-x display-4 opacity-50 mb-3 d-block"></i>
-                        <p>No hay administradores.</p>
+                        <p class="text-muted">No hay administradores.</p>
                     </div>
                     {% endif %}
                 </div>
@@ -122,7 +122,7 @@
         <div class="modal-content sage-modal">
             <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold">Registrar Nuevo Estudiante</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
                 <form action="{{ url_for('crear_estudiante') }}" method="POST">
@@ -172,7 +172,7 @@
         <div class="modal-content sage-modal">
             <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold">Registrar Nuevo Administrador</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
                 <form action="{{ url_for('crear_administrador') }}" method="POST">
