@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+
+from app.auth import authenticate_user, create_access_token, get_current_user, get_password_hash, limiter
 from app.data.database import get_db
-from app.models.SAGE_BD import Estudiante, Administrador
-from app.schemas.token import Token
+from app.models.SAGE_BD import Administrador, Estudiante
 from app.schemas.estudiante import EstudianteCreate, EstudianteResponse
-from app.auth import authenticate_user, create_access_token, get_password_hash, limiter, get_current_user
+from app.schemas.token import Token
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 

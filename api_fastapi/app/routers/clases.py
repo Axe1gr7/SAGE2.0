@@ -5,7 +5,7 @@ from app.data.database import get_db
 from app.models.SAGE_BD import Clase, HorarioClase, Reserva, Espacio, Modulo, TipoReserva, EstadoReserva, Administrador
 from app.schemas.clase import ClaseCreate, ClaseUpdate, ClaseResponse
 from app.schemas.horario_clase import HorarioClaseCreate, HorarioClaseResponse
-from app.auth import get_current_admin
+from app.auth import get_current_admin, get_current_user
 from app.utils.fechas import generar_fechas_semestre
 
 router = APIRouter(prefix="/clases", tags=["Clases"])
@@ -16,7 +16,7 @@ async def list_clases(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    current_user = Depends(get_current_user)
 ):
     return db.query(Clase).filter(Clase.estatus == 0).offset(skip).limit(limit).all()
 
@@ -29,7 +29,7 @@ async def create_clase(clase: ClaseCreate, db: Session = Depends(get_db), admin 
     return db_clase
 
 @router.get("/{id}", response_model=ClaseResponse)
-async def get_clase(id: int, db: Session = Depends(get_db), admin = Depends(get_current_admin)):
+async def get_clase(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     clase = db.query(Clase).filter(Clase.id_clase == id, Clase.estatus == 0).first()
     if not clase:
         raise HTTPException(404, "Clase no encontrada")

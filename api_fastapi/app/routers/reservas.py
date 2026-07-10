@@ -1,17 +1,28 @@
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import cast, Date
 from datetime import datetime, date as date_type
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+from sqlalchemy import Date, cast
+from sqlalchemy.orm import Session
+
+from app.auth import get_current_admin, get_current_user, limiter
 from app.data.database import get_db
 from app.models.SAGE_BD import (
-    Reserva, Equipo, Espacio, EstadoReserva, TipoReserva,
-    Estudiante, Clase, Evento, AuditoriaReserva, AccionAuditoriaEnum,
-    Administrador, Modulo
+    AccionAuditoriaEnum,
+    Administrador,
+    AuditoriaReserva,
+    Clase,
+    Equipo,
+    Espacio,
+    EstadoReserva,
+    Estudiante,
+    Evento,
+    Modulo,
+    Reserva,
+    TipoReserva,
 )
 from app.schemas.reserva import ReservaCreate, ReservaResponse, ReservaUpdate
-from app.auth import get_current_user, get_current_admin
-from pydantic import BaseModel
 
 router = APIRouter(prefix="/reservas", tags=["Reservas"])
 
@@ -77,7 +88,9 @@ def validar_beneficiario_segun_tipo(
 # ==========================================
 
 @router.get("/ocupacion")
+@limiter.limit("30/minute")
 async def get_ocupacion(
+    request: Request,
     fecha: date_type = Query(...),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
@@ -216,7 +229,9 @@ async def get_modulos_disponibles(
 # ==========================================
 
 @router.post("/", response_model=ReservaResponse)
+@limiter.limit("15/minute")
 async def crear_reserva(
+    request: Request,
     reserva: ReservaCreate,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
@@ -288,7 +303,9 @@ async def crear_reserva(
     return db_reserva
 
 @router.post("/estudiante", response_model=ReservaResponse)
+@limiter.limit("15/minute")
 async def crear_reserva_estudiante(
+    request: Request,
     reserva: ReservaEstudianteCreate,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
@@ -346,7 +363,9 @@ async def crear_reserva_estudiante(
     return db_reserva
 
 @router.get("/", response_model=list[ReservaResponse])
+@limiter.limit("30/minute")
 async def listar_reservas(
+    request: Request,
     fecha_inicio: datetime = None,
     fecha_fin: datetime = None,
     espacio_id: int = None,

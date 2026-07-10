@@ -3,16 +3,16 @@ from sqlalchemy.orm import Session
 from app.data.database import get_db
 from app.models.SAGE_BD import Espacio
 from app.schemas.espacio import EspacioCreate, EspacioUpdate, EspacioResponse
-from app.auth import get_current_admin
+from app.auth import get_current_admin, get_current_user
 
 router = APIRouter(prefix="/espacios", tags=["Espacios"])
 
 @router.get("/", response_model=list[EspacioResponse])
-async def list_espacios(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+async def list_espacios(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     return db.query(Espacio).filter(Espacio.estatus == 0).offset(skip).limit(limit).all()
 
 @router.get("/{id}", response_model=EspacioResponse)
-async def get_espacio(id: int, db: Session = Depends(get_db)):
+async def get_espacio(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     espacio = db.query(Espacio).filter(Espacio.id_espacio == id, Espacio.estatus == 0).first()
     if not espacio:
         raise HTTPException(404, "Espacio no encontrado")

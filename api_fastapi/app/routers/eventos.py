@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.data.database import get_db
 from app.models.SAGE_BD import Evento
 from app.schemas.evento import EventoCreate, EventoUpdate, EventoResponse
-from app.auth import get_current_admin
+from app.auth import get_current_admin, get_current_user
 from datetime import datetime
 
 router = APIRouter(prefix="/eventos", tags=["Eventos"])
@@ -12,12 +12,13 @@ router = APIRouter(prefix="/eventos", tags=["Eventos"])
 async def list_eventos(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     return db.query(Evento).filter(Evento.estatus == 0).offset(skip).limit(limit).all()
 
 @router.get("/proximos", response_model=list[EventoResponse])
-async def list_proximos_eventos(limit: int = 10, db: Session = Depends(get_db)):
+async def list_proximos_eventos(limit: int = 10, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     now = datetime.now()
     return db.query(Evento).filter(
         Evento.estatus == 0,
@@ -33,7 +34,7 @@ async def create_evento(evento: EventoCreate, db: Session = Depends(get_db), adm
     return db_evento
 
 @router.get("/{id}", response_model=EventoResponse)
-async def get_evento(id: int, db: Session = Depends(get_db)):
+async def get_evento(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     evento = db.query(Evento).filter(Evento.id_evento == id, Evento.estatus == 0).first()
     if not evento:
         raise HTTPException(404, "Evento no encontrado")

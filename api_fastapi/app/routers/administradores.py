@@ -42,6 +42,9 @@ async def get_administrador(
     db: Session = Depends(get_db),
     current_admin = Depends(get_current_admin)
 ):
+    if current_admin.id_administrador != id:
+        raise HTTPException(403, "No tienes permiso para acceder a este recurso")
+
     admin = db.query(Administrador).filter(Administrador.id_administrador == id, Administrador.estatus == 0).first()
     if not admin:
         raise HTTPException(404, "Administrador no encontrado")
@@ -54,6 +57,9 @@ async def update_administrador(
     db: Session = Depends(get_db),
     current_admin = Depends(get_current_admin)
 ):
+    if current_admin.id_administrador != id:
+        raise HTTPException(403, "No tienes permiso para actualizar a este administrador")
+
     db_admin = db.query(Administrador).filter(Administrador.id_administrador == id, Administrador.estatus == 0).first()
     if not db_admin:
         raise HTTPException(404, "Administrador no encontrado")

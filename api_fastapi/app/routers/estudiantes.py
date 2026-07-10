@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
+
+from app.auth import get_current_admin, get_current_user, get_password_hash, limiter
 from app.data.database import get_db
 from app.models.SAGE_BD import Estudiante
-from app.schemas.estudiante import EstudianteCreate, EstudianteUpdate, EstudianteResponse
-from app.auth import get_current_admin, get_current_user, get_password_hash
+from app.schemas.estudiante import EstudianteCreate, EstudianteResponse, EstudianteUpdate
 
 router = APIRouter(prefix="/estudiantes", tags=["Estudiantes (admin)"])
 
 @router.get("/", response_model=list[EstudianteResponse])
+@limiter.limit("20/minute")
 async def list_estudiantes(
+    request: Request,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
@@ -17,7 +20,9 @@ async def list_estudiantes(
     return db.query(Estudiante).filter(Estudiante.estatus == 0).offset(skip).limit(limit).all()
 
 @router.post("/", response_model=EstudianteResponse)
+@limiter.limit("20/minute")
 async def create_estudiante(
+    request: Request,
     est: EstudianteCreate,
     db: Session = Depends(get_db),
     current_admin = Depends(get_current_admin)
@@ -45,8 +50,7 @@ async def get_estudiante(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    # Prevención BOLA/IDOR: Si es estudiante, solo puede ver su propio perfil
-    if current_user.__class__.__name__ == "Estudiante" and current_user.id_estudiante != id:
+    if isinstance(current_user, Estudiante) and current_user.id_estudiante != id:
         raise HTTPException(403, "No tienes permiso para acceder a este recurso")
 
     est = db.query(Estudiante).filter(Estudiante.id_estudiante == id, Estudiante.estatus == 0).first()
@@ -61,8 +65,7 @@ async def update_estudiante(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    # Prevención BOLA/IDOR: Si es estudiante, solo puede actualizar su propio perfil
-    if current_user.__class__.__name__ == "Estudiante" and current_user.id_estudiante != id:
+    if isinstance(current_user, Estudiante) and current_user.id_estudiante != id:
         raise HTTPException(403, "No tienes permiso para actualizar este recurso")
 
     db_est = db.query(Estudiante).filter(Estudiante.id_estudiante == id, Estudiante.estatus == 0).first()
